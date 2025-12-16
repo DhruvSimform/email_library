@@ -7,7 +7,7 @@ from email_integration.domain.models.folders import MailFolder
 
 from email_integration.services.email_core import EmailCore
 from email_integration.providers.gmail.provider import GmailProvider
-# from email_integration.providers.outlook.provider import OutlookProvider
+from email_integration.providers.outlook.provider import OutlookProvider
 
 
 class EmailReader:
@@ -31,8 +31,8 @@ class EmailReader:
 
         if provider == "gmail":
             provider_instance = GmailProvider(access_token)
-        # elif provider == "outlook":
-        #     provider_instance = OutlookProvider(access_token)
+        elif provider == "outlook":
+            provider_instance = OutlookProvider(access_token)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
