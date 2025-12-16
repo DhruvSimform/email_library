@@ -95,7 +95,7 @@ class GmailProvider(BaseEmailProvider):
                 .get(
                     userId="me",
                     id=msg["id"],
-                    format="metadata",
+                    format="full",
                     metadataHeaders=["Subject", "From"],
                 )
                 .execute()
