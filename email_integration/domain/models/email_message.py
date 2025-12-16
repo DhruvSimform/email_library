@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from .folders import MailFolder
-
+from .attachment import Attachment
 
 class EmailMessage:
     """
@@ -22,6 +22,7 @@ class EmailMessage:
         "timestamp",
         "preview",
         "folder",
+        "attachments",
     )
 
     def __init__(
@@ -33,6 +34,7 @@ class EmailMessage:
         timestamp: datetime,
         preview: str,
         folder: MailFolder,
+        attachments: list[Attachment],
     ) -> None:
         object.__setattr__(self, "message_id", message_id)
         object.__setattr__(self, "subject", subject)
@@ -40,6 +42,11 @@ class EmailMessage:
         object.__setattr__(self, "timestamp", timestamp)
         object.__setattr__(self, "preview", preview)
         object.__setattr__(self, "folder", folder)
+        object.__setattr__(
+            self,
+            "attachments",
+            tuple(attachments),  # enforce immutability
+        )
 
     # -------------------------
     # Immutability
@@ -60,27 +67,9 @@ class EmailMessage:
             "timestamp": self.timestamp.isoformat(),
             "preview": self.preview,
             "folder": self.folder.value,
+            "attachments": [
+                attachment.to_dict() for attachment in self.attachments
+            ],
+            "has_attachments": bool(self.attachments),
+            "attachment_count": len(self.attachments),
         }
-
-    # -------------------------
-    # Equality / Hash / Debug
-    # -------------------------
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, EmailMessage):
-            return False
-        return self.message_id == other.message_id
-
-    def __hash__(self) -> int:
-        return hash(self.message_id)
-
-    def __repr__(self) -> str:
-        return (
-            f"EmailMessage("
-            f"id={self.message_id!r}, "
-            f"subject={self.subject!r}, "
-            f"sender={self.sender!r}, "
-            f"timestamp={self.timestamp.isoformat()}, "
-            f"folder={self.folder.value!r}"
-            f")"
-        )

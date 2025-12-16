@@ -29,6 +29,8 @@ class GmailNormalizer:
             for h in raw["payload"]["headers"]
         }
 
+        attachments = GmailNormalizer.extract_attachments(raw)
+
         return EmailMessage(
             message_id=raw["id"],
             subject=headers.get("Subject", ""),
@@ -38,6 +40,7 @@ class GmailNormalizer:
             ),
             preview=raw.get("snippet", ""),
             folder=folder,
+            attachments=attachments,
         )
 
     # -------------------------
