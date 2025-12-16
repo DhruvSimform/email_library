@@ -1,3 +1,4 @@
+import base64
 from fastapi import APIRouter, HTTPException
 
 from email_integration.services.email_reader import EmailReader
@@ -142,7 +143,7 @@ def download_attachment(payload: AttachmentDownloadRequest):
 
         return {
             "size": len(content),
-            "content_base64": content.decode("latin1"),
+            "content_base64": base64.b64encode(content).decode("ascii"),
         }
     except Exception as exc:
         handle_error(exc)
