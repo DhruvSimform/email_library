@@ -1,30 +1,20 @@
 import base64
-from fastapi import APIRouter, HTTPException
 
-from email_integration.services.email_reader import EmailReader
-from email_integration.domain.models.folders import MailFolder
-from email_integration.domain.models.email_filter import EmailSearchFilter
+from fastapi import APIRouter, HTTPException
 from google.auth.exceptions import RefreshError
 
-from email_integration.exceptions import (
-    InvalidAccessTokenError,
-    AttachmentTooLargeError,
-    EmailIntegrationError,
-    TokenRefreshError,
-    AuthError,
-    ProviderError,
-    NetworkError,
-    NetworkTimeoutError,
-    UnsupportedProviderError,
-)
-
-from fastapi_app.api.schemas import (
-    BaseAuthRequest,
-    InboxRequest,
-    EmailDetailRequest,
-    AttachmentListRequest,
-    AttachmentDownloadRequest,
-)
+from email_integration.domain.models.email_filter import EmailSearchFilter
+from email_integration.domain.models.folders import MailFolder
+from email_integration.exceptions import (AttachmentTooLargeError, AuthError,
+                                          EmailIntegrationError,
+                                          InvalidAccessTokenError,
+                                          NetworkError, NetworkTimeoutError,
+                                          ProviderError, TokenRefreshError,
+                                          UnsupportedProviderError)
+from email_integration.services.email_reader import EmailReader
+from fastapi_app.api.schemas import (AttachmentDownloadRequest,
+                                     AttachmentListRequest, BaseAuthRequest,
+                                     EmailDetailRequest, InboxRequest)
 
 router = APIRouter(prefix="/email", tags=["Email"])
 

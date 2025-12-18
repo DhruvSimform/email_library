@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
-from email_integration.domain.models.email_message import EmailMessage
-from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
-from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_filter import EmailSearchFilter
+from email_integration.domain.models.email_message import EmailMessage
+from email_integration.domain.models.folders import MailFolder
 
 
 class EmailCore:

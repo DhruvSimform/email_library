@@ -1,27 +1,9 @@
+from .attachment import AttachmentError, AttachmentTooLargeError
+from .auth import AuthError, InvalidAccessTokenError, TokenRefreshError
 from .base import EmailIntegrationError
-
-from .auth import (
-    AuthError,
-    InvalidAccessTokenError,
-    TokenRefreshError,
-)
-
-from .provider import (
-    ProviderError,
-    GmailAPIError,
-    OutlookAPIError,
-    UnsupportedProviderError,
-)
-
-from .attachment import (
-    AttachmentError,
-    AttachmentTooLargeError,
-)
-
-from .network import (
-    NetworkError,
-    NetworkTimeoutError,
-)
+from .network import NetworkError, NetworkTimeoutError
+from .provider import (GmailAPIError, OutlookAPIError, ProviderError,
+                       UnsupportedProviderError)
 
 __all__ = [
     # Base

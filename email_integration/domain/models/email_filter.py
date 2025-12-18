@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Iterable
 
 from email_integration.exceptions.filter import InvalidFilterError
+
 from .folders import MailFolder
 
 

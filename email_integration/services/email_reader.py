@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from email_integration.domain.models.email_message import EmailMessage
-from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
-from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_filter import EmailSearchFilter
-
-from email_integration.services.email_core import EmailCore
-from email_integration.providers.registry import ProviderRegistry
+from email_integration.domain.models.email_message import EmailMessage
+from email_integration.domain.models.folders import MailFolder
 from email_integration.exceptions.provider import UnsupportedProviderError
+from email_integration.providers.registry import ProviderRegistry
+from email_integration.services.email_core import EmailCore
 
 
 class EmailReader:

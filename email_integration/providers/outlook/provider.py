@@ -1,25 +1,23 @@
 from __future__ import annotations
 
 import requests
-from requests.exceptions import RequestException, HTTPError
+from requests.exceptions import HTTPError, RequestException
 
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
-from email_integration.domain.models.email_message import EmailMessage
-from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
-from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_filter import EmailSearchFilter
-
-from email_integration.exceptions.auth import InvalidAccessTokenError
-from email_integration.exceptions.provider import OutlookAPIError
+from email_integration.domain.models.email_message import EmailMessage
+from email_integration.domain.models.folders import MailFolder
 from email_integration.exceptions.attachment import AttachmentTooLargeError
+from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.network import NetworkTimeoutError
+from email_integration.exceptions.provider import OutlookAPIError
 from email_integration.providers.registry import ProviderRegistry
 
-from .normalizer import OutlookNormalizer
 from .folder_mapping import OUTLOOK_FOLDER_MAP
+from .normalizer import OutlookNormalizer
 from .query_builder import OutlookQueryBuilder
-
 
 MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
 GRAPH_API_BASE_URL = "https://graph.microsoft.com/v1.0"

@@ -7,22 +7,20 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
-from email_integration.domain.models.email_message import EmailMessage
-from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
-from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_filter import EmailSearchFilter
-
-from email_integration.exceptions.auth import InvalidAccessTokenError
-from email_integration.exceptions.provider import GmailAPIError
+from email_integration.domain.models.email_message import EmailMessage
+from email_integration.domain.models.folders import MailFolder
 from email_integration.exceptions.attachment import AttachmentTooLargeError
+from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.network import NetworkTimeoutError
+from email_integration.exceptions.provider import GmailAPIError
 from email_integration.providers.registry import ProviderRegistry
 
-from .normalizer import GmailNormalizer
 from .folder_mapping import GMAIL_FOLDER_MAP
+from .normalizer import GmailNormalizer
 from .query_builder import GmailQueryBuilder
-
 
 MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
 

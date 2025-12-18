@@ -3,9 +3,9 @@ from __future__ import annotations
 import base64
 from datetime import datetime, timezone
 
-from email_integration.domain.models.email_message import EmailMessage
-from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
+from email_integration.domain.models.email_detail import EmailDetail
+from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.folders import MailFolder
 
 

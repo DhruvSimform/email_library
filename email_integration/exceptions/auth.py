@@ -1,5 +1,6 @@
 from .base import EmailIntegrationError
 
+
 class AuthError(EmailIntegrationError):
     """Base class for authentication-related errors."""
 

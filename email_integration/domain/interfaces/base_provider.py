@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ..models.email_message import EmailMessage
-from ..models.email_detail import EmailDetail
 from ..models.attachment import Attachment
-from ..models.folders import MailFolder
+from ..models.email_detail import EmailDetail
 from ..models.email_filter import EmailSearchFilter
+from ..models.email_message import EmailMessage
+from ..models.folders import MailFolder
 
 
 class BaseEmailProvider(ABC):

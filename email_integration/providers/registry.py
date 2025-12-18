@@ -1,4 +1,5 @@
 from typing import Dict, Type
+
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
 from email_integration.exceptions.provider import UnsupportedProviderError
 

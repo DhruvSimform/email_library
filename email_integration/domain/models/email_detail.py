@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Iterable
 
-from .folders import MailFolder
 from .attachment import Attachment
+from .folders import MailFolder
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

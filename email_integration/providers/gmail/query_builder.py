@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from email_integration.domain.models.email_filter import EmailSearchFilter
-from email_integration.domain.models.folders import (
-    MailFolder,
-)
+from email_integration.domain.models.folders import MailFolder
 
-from .folder_mapping import (GMAIL_FOLDER_MAP)
+from .folder_mapping import GMAIL_FOLDER_MAP
 
 
 class GmailQueryBuilder:

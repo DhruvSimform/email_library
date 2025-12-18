@@ -1,6 +1,7 @@
 """Interfaces (protocols/abstract base classes) for providers."""
 
-from typing import Protocol, Iterable
+from typing import Iterable, Protocol
+
 from ..models import EmailMessage
 
 

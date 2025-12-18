@@ -4,9 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Iterable, Literal
 
-from .folders import MailFolder
 from .attachment import Attachment
-
+from .folders import MailFolder
 
 InboxClassification = Literal["primary", "focused", "other"]
 
