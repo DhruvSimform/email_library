@@ -30,7 +30,22 @@ class GmailProvider(BaseEmailProvider):
     Gmail read-only provider (adapter).
     """
 
-    def __init__(self, access_token: str) -> None:
+    def __init__(self) -> None:
+        self._client = None
+
+    def set_credentials(self, access_token: str) -> None:
+        """
+        Set or update OAuth credentials.
+
+        Args:
+            access_token: Google OAuth access token
+
+        Raises:
+            InvalidAccessTokenError: If token format is invalid
+        """
+        if not access_token or not isinstance(access_token, str):
+            raise InvalidAccessTokenError("Access token must be a non-empty string")
+        
         self._client = self._build_client(access_token)
 
     # -------------------------

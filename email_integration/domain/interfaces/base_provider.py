@@ -132,6 +132,19 @@ class BaseEmailProvider(ABC):
     # =========================
 
     @abstractmethod
+    def set_credentials(self, access_token: str) -> None:
+        """
+        Set or update OAuth credentials.
+
+        Args:
+            access_token: OAuth access token from provider
+
+        Raises:
+            InvalidAccessTokenError: If token format is invalid
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def is_token_valid(self) -> bool:
         """
         Validate whether the OAuth access token is still valid.

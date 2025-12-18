@@ -28,7 +28,25 @@ class OutlookProvider(BaseEmailProvider):
     Outlook read-only provider (adapter) using Microsoft Graph API.
     """
 
-    def __init__(self, access_token: str) -> None:
+    def __init__(self) -> None:
+        self.access_token = None
+        self.headers = {
+            "Content-Type": "application/json",
+        }
+
+    def set_credentials(self, access_token: str) -> None:
+        """
+        Set or update OAuth credentials.
+
+        Args:
+            access_token: Microsoft Graph OAuth access token
+
+        Raises:
+            InvalidAccessTokenError: If token format is invalid
+        """
+        if not access_token or not isinstance(access_token, str):
+            raise InvalidAccessTokenError("Access token must be a non-empty string")
+        
         self.access_token = access_token
         self.headers = {
             "Authorization": f"Bearer {access_token}",
