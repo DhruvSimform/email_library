@@ -156,7 +156,6 @@ class OutlookProvider(BaseEmailProvider):
     ) -> tuple[list[EmailMessage], str | None]:
 
         page_size = max(1, min(page_size, 100))
-        print("folder:", folder)
         # =========================
         # Pagination via nextLink
         # =========================
@@ -179,42 +178,49 @@ class OutlookProvider(BaseEmailProvider):
             # -------------------------
             # Apply filters
             # -------------------------
+
+            special_filters: list[str] = []
+            special_order: str | None = None
+            if folder == MailFolder.INBOX:
+                special_filters.append("InferenceClassification eq 'Focused'")
+                special_order = "InferenceClassification,receivedDateTime desc"
+            if folder == MailFolder.STARRED:
+                special_filters.append("flag/flagStatus eq 'flagged'")
+                special_order = "flag/flagStatus,receivedDateTime desc"
             headers = None
-            if filters:
-                filter_params = OutlookQueryBuilder.build(filters)
 
-                # $search requires ConsistencyLevel header
-                if "$search" in filter_params:
-                    headers = dict(self.headers)
-                    headers["ConsistencyLevel"] = "eventual"
+            filter_params = OutlookQueryBuilder.build(
+                filters or EmailSearchFilter(), 
+                special_filters=special_filters, 
+                special_order=special_order
+            )
 
-                params.update(filter_params)
-            else:
-                params["$orderby"] = "receivedDateTime desc"
-                # Apply folder-specific filters only when no custom filters provided
-                if MailFolder.INBOX == folder:
-                    params["$orderby"] = "InferenceClassification,receivedDateTime desc"
-                    params["$filter"] = "InferenceClassification eq 'Focused'"
-                if MailFolder.STARRED == folder:
-                    params["$orderby"] = "flag/flagStatus,receivedDateTime desc"
-                    params["$filter"] = "flag/flagStatus eq 'flagged'"
+            # $search requires ConsistencyLevel header
+            if "$search" in filter_params:
+                headers = dict(self.headers)
+                headers["ConsistencyLevel"] = "eventual"
+
+            params.update(filter_params)
             response = self._make_request("GET", endpoint, params, headers=headers)
 
         # =========================
         # Normalize results
         # =========================
-        emails: list[EmailMessage] = []
-
-        for msg_data in response.get("value", []):
-            emails.append(
-                OutlookNormalizer.to_email_message(
-                    msg_data,
-                    folder=folder,
+        try:
+            emails: list[EmailMessage] = []
+            for msg_data in response.get("value", []):
+                emails.append(
+                    OutlookNormalizer.to_email_message(
+                        msg_data,
+                        folder=folder,
+                    )
                 )
-            )
+        except (InvalidAccessTokenError, NetworkTimeoutError):
+            raise
+        except Exception as exc:
+            raise OutlookAPIError("Failed to process email results") from exc
 
         next_cursor = response.get("@odata.nextLink")
-
         return emails, next_cursor
     
     # -------------------------
@@ -238,12 +244,16 @@ class OutlookProvider(BaseEmailProvider):
 
         raw = self._make_request("GET", endpoint, params)
 
-        attachments = OutlookNormalizer.extract_attachments(raw)
-
-        return OutlookNormalizer.to_email_detail(
-            raw,
-            attachments=attachments,
-        )
+        try:
+            attachments = OutlookNormalizer.extract_attachments(raw)
+            return OutlookNormalizer.to_email_detail(
+                raw,
+                attachments=attachments,
+            )
+        except (InvalidAccessTokenError, NetworkTimeoutError):
+            raise
+        except Exception as exc:
+            raise OutlookAPIError("Failed to parse email detail") from exc
 
     # -------------------------
     # Folders
@@ -269,17 +279,21 @@ class OutlookProvider(BaseEmailProvider):
 
         response = self._make_request("GET", endpoint, params)
 
-        attachments: list[Attachment] = []
-
-        for attachment_data in response.get("value", []):
-            attachments.append(
-                Attachment(
-                    attachment_id=attachment_data.get("id", ""),
-                    filename=attachment_data.get("name", ""),
-                    size_bytes=attachment_data.get("size", 0),
-                    mime_type=attachment_data.get("contentType", ""),
+        try:
+            attachments: list[Attachment] = []
+            for attachment_data in response.get("value", []):
+                attachments.append(
+                    Attachment(
+                        attachment_id=attachment_data.get("id", ""),
+                        filename=attachment_data.get("name", ""),
+                        size_bytes=attachment_data.get("size", 0),
+                        mime_type=attachment_data.get("contentType", ""),
+                    )
                 )
-            )
+        except (InvalidAccessTokenError, NetworkTimeoutError):
+            raise
+        except Exception as exc:
+            raise OutlookAPIError("Failed to parse attachments") from exc
 
         return attachments
 
@@ -298,19 +312,22 @@ class OutlookProvider(BaseEmailProvider):
         """
 
         endpoint = f"/me/messages/{message_id}/attachments/{attachment_id}"
-
         attachment_data = self._make_request("GET", endpoint)
 
-        # Ensure this is a file attachment
-        if attachment_data.get("@odata.type") != "#microsoft.graph.fileAttachment":
-            raise OutlookAPIError("Unsupported attachment type")
+        try:
+            if attachment_data.get("@odata.type") != "#microsoft.graph.fileAttachment":
+                raise OutlookAPIError("Unsupported attachment type")
 
-        size = attachment_data.get("size", 0)
-        if size > MAX_ATTACHMENT_SIZE_BYTES:
-            raise AttachmentTooLargeError("Attachment too large")
+            size = attachment_data.get("size", 0)
+            if size > MAX_ATTACHMENT_SIZE_BYTES:
+                raise AttachmentTooLargeError("Attachment too large")
 
-        content_bytes = attachment_data.get("contentBytes")
-        if not content_bytes:
-            raise OutlookAPIError("Attachment content missing")
+            content_bytes = attachment_data.get("contentBytes")
+            if not content_bytes:
+                raise OutlookAPIError("Attachment content missing")
 
-        return OutlookNormalizer.parse_attachment_content(attachment_data)
+            return OutlookNormalizer.parse_attachment_content(attachment_data)
+        except (InvalidAccessTokenError, NetworkTimeoutError, OutlookAPIError, AttachmentTooLargeError):
+            raise
+        except Exception as exc:
+            raise OutlookAPIError("Failed to download attachment") from exc

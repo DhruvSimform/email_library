@@ -15,7 +15,7 @@ class OutlookQueryBuilder:
     """
 
     @staticmethod
-    def build(filters: EmailSearchFilter) -> dict[str, str]:
+    def build(filters: EmailSearchFilter, special_filters: list[str] | None = None, special_order: str | None = None) -> dict[str, str]:
         filter_parts: list[str] = []
         search_parts: list[str] = []
 
@@ -23,18 +23,12 @@ class OutlookQueryBuilder:
         # Address-based filters
         # =========================
         if filters.from_address:
-            filter_parts.append(
-                f"from/emailAddress/address eq '{filters.from_address}'"
-            )
+            search_parts.append(f"from:{filters.from_address}")
 
         if filters.to_addresses:
             for address in filters.to_addresses:
-                filter_parts.append(
-                    "toRecipients/any("
-                    f"r:r/emailAddress/address eq '{address}'"
-                    ")"
-                )
-
+                search_parts.append(f"recipients:{address}")
+        
         # =========================
         # Content-based filters
         # =========================
@@ -74,6 +68,9 @@ class OutlookQueryBuilder:
                 f"receivedDateTime le {filters.end_date.isoformat()}"
             )
 
+        if special_filters:
+            filter_parts.extend(special_filters)
+        
         # =========================
         # Final assembly
         # =========================
@@ -83,8 +80,11 @@ class OutlookQueryBuilder:
             params["$filter"] = " and ".join(filter_parts)
 
         if search_parts:
-            params["$search"] = " ".join(search_parts)
+            params["$search"] = f"\"{' '.join(search_parts)}\""
 
-        params["$orderby"] = "receivedDateTime desc"
+        if special_order:
+            params["$orderby"] = special_order
+        # else:
+        #     params["$orderby"] = "receivedDateTime desc"
 
         return params
