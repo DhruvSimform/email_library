@@ -40,7 +40,7 @@ class EmailCore:
         """
         Fetch a page of emails from a folder with optional filters.
         """
-        print("folder in core", folder)
+
         return self._provider.fetch_emails(
             page_size=page_size,
             cursor=cursor,
