@@ -17,6 +17,7 @@ from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.provider import GmailAPIError
 from email_integration.exceptions.attachment import AttachmentTooLargeError
 from email_integration.exceptions.network import NetworkTimeoutError
+from email_integration.providers.registry import ProviderRegistry
 
 from .normalizer import GmailNormalizer
 from .folder_mapping import GMAIL_FOLDER_MAP
@@ -237,3 +238,5 @@ class GmailProvider(BaseEmailProvider):
             raise AttachmentTooLargeError("Attachment too large")
 
         return content
+
+ProviderRegistry.register("gmail", GmailProvider)

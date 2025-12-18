@@ -7,6 +7,14 @@ class ProviderError(EmailIntegrationError):
     default_message = "Email provider error"
 
 
+class UnsupportedProviderError(ProviderError):
+    """
+    Raised when a requested provider is not registered or supported.
+    """
+
+    default_message = "Unsupported email provider"
+
+
 class GmailAPIError(ProviderError):
     """
     Raised when Gmail API returns an error.

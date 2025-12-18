@@ -19,6 +19,7 @@ class BaseEmailProvider(ABC):
     - Must return domain models only
     - Must NOT expose raw API payloads
     - Must raise domain-level exceptions (not SDK/API errors)
+    - Must implement all abstract methods
 
     methods:
     - fetch_emails
@@ -30,7 +31,7 @@ class BaseEmailProvider(ABC):
     """
 
     # =========================
-    # Core Inbox APIs
+    # Core Email list APIs
     # =========================
 
     @abstractmethod

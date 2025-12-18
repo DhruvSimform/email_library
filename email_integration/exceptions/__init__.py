@@ -10,6 +10,7 @@ from .provider import (
     ProviderError,
     GmailAPIError,
     OutlookAPIError,
+    UnsupportedProviderError,
 )
 
 from .attachment import (
@@ -35,6 +36,7 @@ __all__ = [
     "ProviderError",
     "GmailAPIError",
     "OutlookAPIError",
+    "UnsupportedProviderError",
 
     # Attachment
     "AttachmentError",
@@ -43,5 +45,4 @@ __all__ = [
     # Network
     "NetworkError",
     "NetworkTimeoutError",
-    "TokenRefreshError",
 ]

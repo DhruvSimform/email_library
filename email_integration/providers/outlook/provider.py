@@ -14,6 +14,7 @@ from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.provider import OutlookAPIError
 from email_integration.exceptions.attachment import AttachmentTooLargeError
 from email_integration.exceptions.network import NetworkTimeoutError
+from email_integration.providers.registry import ProviderRegistry
 
 from .normalizer import OutlookNormalizer
 from .folder_mapping import OUTLOOK_FOLDER_MAP
@@ -328,3 +329,5 @@ class OutlookProvider(BaseEmailProvider):
             raise
         except Exception as exc:
             raise OutlookAPIError("Failed to download attachment") from exc
+
+ProviderRegistry.register("outlook", OutlookProvider)

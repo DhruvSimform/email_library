@@ -11,6 +11,11 @@ from email_integration.exceptions import (
     AttachmentTooLargeError,
     EmailIntegrationError,
     TokenRefreshError,
+    AuthError,
+    ProviderError,
+    NetworkError,
+    NetworkTimeoutError,
+    UnsupportedProviderError,
 )
 
 from fastapi_app.api.schemas import (
@@ -36,16 +41,30 @@ def get_reader(payload: BaseAuthRequest) -> EmailReader:
 
 
 def handle_error(exc: Exception) -> None:
-    if isinstance(exc, InvalidAccessTokenError):
-        raise HTTPException(status_code=401, detail="Re-auth required")
-    if isinstance(exc, AttachmentTooLargeError):
-        raise HTTPException(status_code=413, detail="Attachment too large")
-    if isinstance(exc, EmailIntegrationError):
-        raise HTTPException(status_code=500, detail=str(exc))
-    if isinstance(exc, TokenRefreshError):
-        raise HTTPException(status_code=500, detail="Token refresh failed")
+    """Map exceptions to appropriate HTTP status codes."""
+    # 401 Unauthorized - Authentication/Token errors
+    if isinstance(exc, (InvalidAccessTokenError, TokenRefreshError, AuthError)):
+        raise HTTPException(status_code=401, detail="Authentication failed. Please re-authenticate.")
     if isinstance(exc, RefreshError):
         raise HTTPException(status_code=401, detail="Re-auth required")
+    
+    # 400 Bad Request - Client input errors
+    if isinstance(exc, UnsupportedProviderError):
+        raise HTTPException(status_code=400, detail=str(exc))
+    
+    # 413 Payload Too Large - Attachment size errors
+    if isinstance(exc, AttachmentTooLargeError):
+        raise HTTPException(status_code=413, detail="Attachment too large")
+    
+    # 503 Service Unavailable - Network/External service errors
+    if isinstance(exc, (NetworkTimeoutError, NetworkError)):
+        raise HTTPException(status_code=503, detail="Email service temporarily unavailable. Please try again later.")
+    
+    # 500 Internal Server Error - Unexpected provider/integration errors
+    if isinstance(exc, (ProviderError, EmailIntegrationError)):
+        raise HTTPException(status_code=500, detail=str(exc))
+    
+    # Default: 500 for any unhandled exception
     raise 
 
 
