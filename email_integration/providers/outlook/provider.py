@@ -180,19 +180,16 @@ class OutlookProvider(BaseEmailProvider):
             # -------------------------
 
             special_filters: list[str] = []
-            special_order: str | None = None
             if folder == MailFolder.INBOX:
                 special_filters.append("InferenceClassification eq 'Focused'")
-                special_order = "InferenceClassification,receivedDateTime desc"
             if folder == MailFolder.STARRED:
                 special_filters.append("flag/flagStatus eq 'flagged'")
-                special_order = "flag/flagStatus,receivedDateTime desc"
             headers = None
 
+            # QueryBuilder auto-generates $orderby from active filter fields
             filter_params = OutlookQueryBuilder.build(
                 filters or EmailSearchFilter(), 
-                special_filters=special_filters, 
-                special_order=special_order
+                special_filters=special_filters if special_filters else None
             )
 
             # $search requires ConsistencyLevel header
