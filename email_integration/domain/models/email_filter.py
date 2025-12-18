@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
 
+from email_integration.exceptions.filter import InvalidFilterError
 from .folders import MailFolder
 
 
@@ -71,18 +72,41 @@ class EmailSearchFilter:
     is_read: bool | None = None
 
     # =========================
-    # Folder constraint (optional)
+    # Folder constraint (optional) not using as we are passing folder separately,
+    # consider it as navigational parameter
     # =========================
     # Narrows search to a specific folder
     # Acts as a search constraint, not navigation
     # Example:
     #   folder=MailFolder.SENT
-    folder: MailFolder | None = None
+    # folder: MailFolder | None = None
 
     def __post_init__(self) -> None:
-        # Normalize iterable fields to tuples to guarantee immutability
+        # ========================
+        # Email address validations
+        # ========================
+        if self.from_address is not None:
+            if "@" not in self.from_address:
+                raise InvalidFilterError("from_address must be a valid email format")
+        
+        if self.to_addresses is not None:
+            to_list = tuple(self.to_addresses)
+            for addr in to_list:
+                if "@" not in addr:
+                    raise InvalidFilterError(f"Invalid email format in to_addresses: {addr}")
+            object.__setattr__(self, "to_addresses", to_list)
+        
+        # ========================
+        # Date range validation
+        # ========================
+        if self.start_date is not None and self.end_date is not None:
+            if self.start_date > self.end_date:
+                raise InvalidFilterError(
+                    "start_date cannot be greater than end_date"
+                )
+        
+        # ========================
+        # Normalize iterables
+        # ========================
         if self.has_words is not None:
             object.__setattr__(self, "has_words", tuple(self.has_words))
-
-        if self.to_addresses is not None:
-            object.__setattr__(self, "to_addresses", tuple(self.to_addresses))

@@ -19,11 +19,9 @@ class GmailQueryBuilder:
         query: list[str] = []
 
         # =========================
-        # Folder constraint (Gmail)
+        # Folder constraint (Gmail) not using here as we are passing folder separately,
+        # consider it as navigational parameter lable we can pass from provider
         # =========================
-        if filters.folder and filters.folder in GMAIL_FOLDER_MAP:
-            gmail_label = GMAIL_FOLDER_MAP[filters.folder]
-            query.append(f"in:{gmail_label.lower()}")
 
         # =========================
         # Address-based filters
