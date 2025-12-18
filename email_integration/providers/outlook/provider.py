@@ -3,6 +3,11 @@ from __future__ import annotations
 import requests
 from requests.exceptions import HTTPError, RequestException
 
+from email_integration.core.constant import (DEFAULT_PAGE_SIZE,
+                                             MAX_ATTACHMENT_SIZE_BYTES,
+                                             MAX_PAGE_SIZE, MIN_PAGE_SIZE,
+                                             OUTLOOK_GRAPH_API_BASE_URL,
+                                             REQUEST_TIMEOUT_SECONDS)
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.email_detail import EmailDetail
@@ -18,9 +23,6 @@ from email_integration.providers.registry import ProviderRegistry
 from .folder_mapping import OUTLOOK_FOLDER_MAP
 from .normalizer import OutlookNormalizer
 from .query_builder import OutlookQueryBuilder
-
-MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
-GRAPH_API_BASE_URL = "https://graph.microsoft.com/v1.0"
 
 
 class OutlookProvider(BaseEmailProvider):
@@ -62,10 +64,10 @@ class OutlookProvider(BaseEmailProvider):
         method: str,
         endpoint: str,
         params: dict | None = None,
-        timeout: int = 30,
+        timeout: int = REQUEST_TIMEOUT_SECONDS,
         headers: dict | None = None,
     ) -> dict:
-        url = f"{GRAPH_API_BASE_URL}{endpoint}"
+        url = f"{OUTLOOK_GRAPH_API_BASE_URL}{endpoint}"
         return self._make_request_url(url, method, params, timeout, headers)
 
     def _make_request_url(
@@ -73,7 +75,7 @@ class OutlookProvider(BaseEmailProvider):
         url: str,
         method: str = "GET",
         params: dict | None = None,
-        timeout: int = 30,
+        timeout: int = REQUEST_TIMEOUT_SECONDS,
         headers: dict | None = None,
     ) -> dict:
         """
@@ -166,13 +168,13 @@ class OutlookProvider(BaseEmailProvider):
     def fetch_emails(
         self,
         *,
-        page_size: int = 10,
+        page_size: int = DEFAULT_PAGE_SIZE,
         cursor: str | None = None,
         folder: MailFolder | None = None,
         filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
 
-        page_size = max(1, min(page_size, 100))
+        page_size = max(MIN_PAGE_SIZE, min(page_size, MAX_PAGE_SIZE))
         # =========================
         # Pagination via nextLink
         # =========================

@@ -6,6 +6,10 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from email_integration.core.constant import (DEFAULT_PAGE_SIZE,
+                                             GOOGLE_OAUTH_SCOPE_GMAIL_READONLY,
+                                             MAX_ATTACHMENT_SIZE_BYTES,
+                                             MAX_PAGE_SIZE, MIN_PAGE_SIZE)
 from email_integration.domain.interfaces.base_provider import BaseEmailProvider
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.email_detail import EmailDetail
@@ -21,8 +25,6 @@ from email_integration.providers.registry import ProviderRegistry
 from .folder_mapping import GMAIL_FOLDER_MAP
 from .normalizer import GmailNormalizer
 from .query_builder import GmailQueryBuilder
-
-MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
 
 
 class GmailProvider(BaseEmailProvider):
@@ -57,7 +59,7 @@ class GmailProvider(BaseEmailProvider):
         try:
             credentials = Credentials(
                 token=token,
-                scopes=["https://www.googleapis.com/auth/gmail.readonly"],
+                scopes=[GOOGLE_OAUTH_SCOPE_GMAIL_READONLY],
             )
             return build("gmail", "v1", credentials=credentials)
         except Exception as exc:  # noqa: BLE001 (intentional boundary)
@@ -85,12 +87,13 @@ class GmailProvider(BaseEmailProvider):
     def fetch_emails(
         self,
         *,
-        page_size: int = 10,
+        page_size: int = DEFAULT_PAGE_SIZE,
         cursor: str | None = None,
         folder: MailFolder | None = None,
         filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
         
+        page_size = max(MIN_PAGE_SIZE, min(page_size, MAX_PAGE_SIZE))
         label = None
         if folder:
             try:
