@@ -13,7 +13,8 @@ class MailFolder(str, Enum):
     SENT = "sent"
     DRAFTS = "drafts"
     DELETED = "deleted"
-    ARCHIVE = "archive"
+    SPAM = "spam"
+    STARRED = "starred"
 
     def __str__(self) -> str:
         return self.value

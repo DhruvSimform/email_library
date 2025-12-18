@@ -1,6 +1,5 @@
 from .base import EmailIntegrationError
 
-
 class AuthError(EmailIntegrationError):
     """Base class for authentication-related errors."""
 
@@ -13,3 +12,14 @@ class InvalidAccessTokenError(AuthError):
     """
 
     default_message = "Access token is invalid or expired"
+
+class TokenRefreshError(AuthError):
+    """
+    Raised when there is an error refreshing the access token.
+    """
+
+    default_message = "Failed to refresh access token"
+
+    def __init__(self, message: str | None = None, original_exception: Exception | None = None):
+        super().__init__(message or self.default_message)
+        self.original_exception = original_exception    

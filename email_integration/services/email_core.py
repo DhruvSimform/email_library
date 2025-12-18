@@ -5,6 +5,7 @@ from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_filter import EmailSearchFilter
 
 
 class EmailCore:
@@ -28,20 +29,23 @@ class EmailCore:
     # Inbox
     # =========================
 
-    def fetch_inbox(
+    def fetch_emails(
         self,
         *,
         page_size: int = 10,
         cursor: str | None = None,
-        folder: MailFolder = MailFolder.INBOX,
+        folder: MailFolder | None = None,
+        filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
         """
-        Fetch a page of emails from a folder.
+        Fetch a page of emails from a folder with optional filters.
         """
-        return self._provider.fetch_inbox(
+        print("folder in core", folder)
+        return self._provider.fetch_emails(
             page_size=page_size,
             cursor=cursor,
             folder=folder,
+            filters=filters,
         )
 
     # =========================
@@ -52,14 +56,12 @@ class EmailCore:
         self,
         *,
         message_id: str,
-        folder: MailFolder = MailFolder.INBOX,
     ) -> EmailDetail:
         """
         Fetch full details of a single email.
         """
         return self._provider.fetch_email_detail(
             message_id=message_id,
-            folder=folder,
         )
 
     # =========================

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 
+@dataclass(frozen=True, slots=True)
 class Attachment:
     """
     Read-only attachment metadata.
@@ -12,32 +14,10 @@ class Attachment:
     Immutable after creation.
     """
 
-    __slots__ = (
-        "attachment_id",
-        "filename",
-        "size_bytes",
-        "mime_type",
-    )
-
-    def __init__(
-        self,
-        *,
-        attachment_id: str,
-        filename: str,
-        size_bytes: int,
-        mime_type: str,
-    ) -> None:
-        object.__setattr__(self, "attachment_id", attachment_id)
-        object.__setattr__(self, "filename", filename)
-        object.__setattr__(self, "size_bytes", size_bytes)
-        object.__setattr__(self, "mime_type", mime_type)
-
-    # -------------------------
-    # Immutability
-    # -------------------------
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        raise AttributeError("Attachment is immutable")
+    attachment_id: str
+    filename: str
+    size_bytes: int
+    mime_type: str
 
     # -------------------------
     # Convenience helpers
@@ -62,25 +42,3 @@ class Attachment:
             "size_bytes": self.size_bytes,
             "mime_type": self.mime_type,
         }
-
-    # -------------------------
-    # Equality / Hash / Debug
-    # -------------------------
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Attachment):
-            return False
-        return self.attachment_id == other.attachment_id
-
-    def __hash__(self) -> int:
-        return hash(self.attachment_id)
-
-    def __repr__(self) -> str:
-        return (
-            f"Attachment("
-            f"id={self.attachment_id!r}, "
-            f"filename={self.filename!r}, "
-            f"size_bytes={self.size_bytes}, "
-            f"mime_type={self.mime_type!r}"
-            f")"
-        )

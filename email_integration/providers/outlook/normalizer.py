@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from email_integration.domain.models.email_message import EmailMessage
@@ -37,8 +37,8 @@ class OutlookNormalizer:
 
         # Parse timestamp
         timestamp = datetime.fromisoformat(
-            raw.get("receivedDateTime", "").replace("Z", "+00:00")
-        )
+                raw["receivedDateTime"].replace("Z", "+00:00")
+        ).astimezone(timezone.utc)
 
         # Extract attachments info (if available)
         attachments: list[Attachment] = []
@@ -61,6 +61,14 @@ class OutlookNormalizer:
             # Leave attachments list empty - they'll be loaded on demand
             pass
 
+        # Outlook gives: "focused" | "other"
+        raw_classification = raw.get("inferenceClassification")
+
+        # Map to domain-level inbox classification
+        inbox_classification: str | None = None
+        if raw_classification in ("focused", "other"):
+            inbox_classification = raw_classification
+
         return EmailMessage(
             message_id=raw["id"],
             subject=raw.get("subject", ""),
@@ -69,6 +77,7 @@ class OutlookNormalizer:
             preview=raw.get("bodyPreview", ""),
             folder=folder,
             attachments=attachments,
+            inbox_classification=inbox_classification,
         )
 
     # -------------------------
@@ -79,7 +88,6 @@ class OutlookNormalizer:
     def to_email_detail(
         raw: dict,
         *,
-        folder: MailFolder,
         attachments: list[Attachment],
     ) -> EmailDetail:
         """
@@ -103,8 +111,8 @@ class OutlookNormalizer:
 
         # Parse timestamp
         timestamp = datetime.fromisoformat(
-            raw.get("receivedDateTime", "").replace("Z", "+00:00")
-        )
+                raw["receivedDateTime"].replace("Z", "+00:00")
+        ).astimezone(timezone.utc)
 
         # Extract body content
         body_content = raw.get("body", {})
@@ -127,7 +135,6 @@ class OutlookNormalizer:
             timestamp=timestamp,
             body_text=body_text,
             body_html=body_html,
-            folder=folder,
             attachments=attachments,
         )
 

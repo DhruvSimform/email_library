@@ -3,6 +3,7 @@ from .base import EmailIntegrationError
 from .auth import (
     AuthError,
     InvalidAccessTokenError,
+    TokenRefreshError,
 )
 
 from .provider import (
@@ -28,6 +29,7 @@ __all__ = [
     # Auth
     "AuthError",
     "InvalidAccessTokenError",
+    "TokenRefreshError",
 
     # Provider
     "ProviderError",
@@ -41,4 +43,5 @@ __all__ = [
     # Network
     "NetworkError",
     "NetworkTimeoutError",
+    "TokenRefreshError",
 ]

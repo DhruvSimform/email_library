@@ -11,13 +11,16 @@ from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_filter import EmailSearchFilter
 
 from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.provider import GmailAPIError
 from email_integration.exceptions.attachment import AttachmentTooLargeError
+from email_integration.exceptions.network import NetworkTimeoutError
 
 from .normalizer import GmailNormalizer
 from .folder_mapping import GMAIL_FOLDER_MAP
+from .query_builder import GmailQueryBuilder
 
 
 MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
@@ -36,11 +39,15 @@ class GmailProvider(BaseEmailProvider):
     # -------------------------
 
     def _build_client(self, token: str):
+        """Build Gmail API client from access token"""
         try:
-            credentials = Credentials(token=token)
+            credentials = Credentials(
+                token=token,
+                scopes=["https://www.googleapis.com/auth/gmail.readonly"],
+            )
             return build("gmail", "v1", credentials=credentials)
         except Exception as exc:  # noqa: BLE001 (intentional boundary)
-            raise InvalidAccessTokenError("Invalid Gmail token") from exc
+            raise InvalidAccessTokenError("Invalid Gmail token")
 
     # -------------------------
     # Token
@@ -50,6 +57,8 @@ class GmailProvider(BaseEmailProvider):
         try:
             self._client.users().getProfile(userId="me").execute()
             return True
+        except TimeoutError as exc:
+            raise NetworkTimeoutError() from exc
         except HttpError as exc:
             if exc.resp.status == 401:
                 return False
@@ -59,15 +68,25 @@ class GmailProvider(BaseEmailProvider):
     # Inbox
     # -------------------------
 
-    def fetch_inbox(
+    def fetch_emails(
         self,
         *,
         page_size: int = 10,
         cursor: str | None = None,
-        folder: MailFolder = MailFolder.INBOX,
+        folder: MailFolder | None = None,
+        filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
+        
+        label = None
+        if folder:
+            try:
+                label = GMAIL_FOLDER_MAP[folder]
+            except KeyError:
+                raise GmailAPIError(f"Folder '{folder}' not supported in Gmail")
 
-        label = GMAIL_FOLDER_MAP[folder]
+        query: str | None = None
+        if filters:
+            query = GmailQueryBuilder.build(filters)
 
         try:
             response = (
@@ -75,31 +94,39 @@ class GmailProvider(BaseEmailProvider):
                 .messages()
                 .list(
                     userId="me",
-                    labelIds=[label],
+                    labelIds=[label] if label else None,
+                    q=query,
                     maxResults=page_size,
                     pageToken=cursor,
                 )
                 .execute()
             )
+        except TimeoutError as exc:
+            raise NetworkTimeoutError() from exc
         except HttpError as exc:
             if exc.resp.status == 401:
-                raise InvalidAccessTokenError("Access token expired") from exc
+                raise InvalidAccessTokenError("Access token expired")
             raise GmailAPIError(exc.reason) from exc
 
         emails: list[EmailMessage] = []
 
         for msg in response.get("messages", []):
-            raw = (
-                self._client.users()
-                .messages()
-                .get(
-                    userId="me",
-                    id=msg["id"],
-                    format="full",
-                    metadataHeaders=["Subject", "From"],
+            try:
+                raw = (
+                    self._client.users()
+                    .messages()
+                    .get(
+                        userId="me",
+                        id=msg["id"],
+                        format="full",
+                        metadataHeaders=["Subject", "From"],
+                    )
+                    .execute()
                 )
-                .execute()
-            )
+            except TimeoutError as exc:
+                raise NetworkTimeoutError() from exc
+            except HttpError as exc:
+                raise GmailAPIError(exc.reason) from exc
 
             emails.append(
                 GmailNormalizer.to_email_message(
@@ -118,7 +145,6 @@ class GmailProvider(BaseEmailProvider):
         self,
         *,
         message_id: str,
-        folder: MailFolder = MailFolder.INBOX,
     ) -> EmailDetail:
 
         try:
@@ -132,6 +158,8 @@ class GmailProvider(BaseEmailProvider):
                 )
                 .execute()
             )
+        except TimeoutError as exc:
+            raise NetworkTimeoutError() from exc
         except HttpError as exc:
             if exc.resp.status == 401:
                 raise InvalidAccessTokenError("Access token expired") from exc
@@ -141,7 +169,6 @@ class GmailProvider(BaseEmailProvider):
 
         return GmailNormalizer.to_email_detail(
             raw,
-            folder=folder,
             attachments=attachments,
         )
 
@@ -162,12 +189,17 @@ class GmailProvider(BaseEmailProvider):
         message_id: str,
     ) -> list[Attachment]:
 
-        raw = (
-            self._client.users()
-            .messages()
-            .get(userId="me", id=message_id)
-            .execute()
-        )
+        try:
+            raw = (
+                self._client.users()
+                .messages()
+                .get(userId="me", id=message_id)
+                .execute()
+            )
+        except TimeoutError as exc:
+            raise NetworkTimeoutError() from exc
+        except HttpError as exc:
+            raise GmailAPIError(exc.reason) from exc
 
         return GmailNormalizer.extract_attachments(raw)
 
@@ -178,17 +210,22 @@ class GmailProvider(BaseEmailProvider):
         attachment_id: str,
     ) -> bytes:
 
-        attachment = (
-            self._client.users()
-            .messages()
-            .attachments()
-            .get(
-                userId="me",
-                messageId=message_id,
-                id=attachment_id,
+        try:
+            attachment = (
+                self._client.users()
+                .messages()
+                .attachments()
+                .get(
+                    userId="me",
+                    messageId=message_id,
+                    id=attachment_id,
+                )
+                .execute()
             )
-            .execute()
-        )
+        except TimeoutError as exc:
+            raise NetworkTimeoutError() from exc
+        except HttpError as exc:
+            raise GmailAPIError(exc.reason) from exc
 
         data = attachment.get("data")
         if not data:

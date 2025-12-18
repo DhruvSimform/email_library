@@ -6,6 +6,7 @@ from ..models.email_message import EmailMessage
 from ..models.email_detail import EmailDetail
 from ..models.attachment import Attachment
 from ..models.folders import MailFolder
+from ..models.email_filter import EmailSearchFilter
 
 
 class BaseEmailProvider(ABC):
@@ -20,7 +21,7 @@ class BaseEmailProvider(ABC):
     - Must raise domain-level exceptions (not SDK/API errors)
 
     methods:
-    - fetch_inbox
+    - fetch_emails
     - fetch_email_detail
     - list_folders
     - list_attachments
@@ -33,12 +34,13 @@ class BaseEmailProvider(ABC):
     # =========================
 
     @abstractmethod
-    def fetch_inbox(
+    def fetch_emails(
         self,
         *,
         page_size: int = 10,
         cursor: str | None = None,
-        folder: MailFolder = MailFolder.INBOX,
+        folder: MailFolder | None = None,
+        filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
         """
         Fetch emails from a folder with pagination.
@@ -63,7 +65,6 @@ class BaseEmailProvider(ABC):
         self,
         *,
         message_id: str,
-        folder: MailFolder = MailFolder.INBOX,
     ) -> EmailDetail:
         """
         Fetch full details of a single email.

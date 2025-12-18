@@ -1,9 +1,10 @@
-from typing import List, Optional, Tuple
+from __future__ import annotations
 
 from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_filter import EmailSearchFilter
 
 from email_integration.services.email_core import EmailCore
 from email_integration.providers.gmail.provider import GmailProvider
@@ -26,7 +27,7 @@ class EmailReader:
         *,
         provider: str,
         access_token: str,
-    ):
+    ) -> None:
         provider = provider.lower()
 
         if provider == "gmail":
@@ -46,16 +47,18 @@ class EmailReader:
         self,
         *,
         page_size: int = 10,
-        cursor: Optional[str] = None,
-        folder: MailFolder = MailFolder.INBOX,
-    ) -> Tuple[List[EmailMessage], Optional[str]]:
+        cursor: str | None = None,
+        folder: MailFolder | None = None,
+        filters: EmailSearchFilter | None = None,
+    ) -> tuple[list[EmailMessage], str | None]:
         """
         Fetch inbox emails with pagination.
         """
-        return self._core.fetch_inbox(
+        return self._core.fetch_emails(
             page_size=page_size,
             cursor=cursor,
             folder=folder,
+            filters=filters,
         )
 
     # =========================
@@ -66,21 +69,19 @@ class EmailReader:
         self,
         *,
         message_id: str,
-        folder: MailFolder = MailFolder.INBOX,
     ) -> EmailDetail:
         """
         Fetch full details of a single email.
         """
         return self._core.fetch_email_detail(
             message_id=message_id,
-            folder=folder,
         )
 
     # =========================
     # Folders
     # =========================
 
-    def get_folders(self) -> List[MailFolder]:
+    def get_folders(self) -> list[MailFolder]:
         """
         List available default folders.
         """
@@ -94,7 +95,7 @@ class EmailReader:
         self,
         *,
         message_id: str,
-    ) -> List[Attachment]:
+    ) -> list[Attachment]:
         """
         List attachments for an email.
         """

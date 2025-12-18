@@ -8,6 +8,7 @@ from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_filter import EmailSearchFilter
 
 from email_integration.exceptions.auth import InvalidAccessTokenError
 from email_integration.exceptions.provider import OutlookAPIError
@@ -16,6 +17,7 @@ from email_integration.exceptions.network import NetworkTimeoutError
 
 from .normalizer import OutlookNormalizer
 from .folder_mapping import OUTLOOK_FOLDER_MAP
+from .query_builder import OutlookQueryBuilder
 
 
 MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
@@ -44,9 +46,10 @@ class OutlookProvider(BaseEmailProvider):
         endpoint: str,
         params: dict | None = None,
         timeout: int = 30,
+        headers: dict | None = None,
     ) -> dict:
         url = f"{GRAPH_API_BASE_URL}{endpoint}"
-        return self._make_request_url(url, method, params, timeout)
+        return self._make_request_url(url, method, params, timeout, headers)
 
     def _make_request_url(
         self,
@@ -54,31 +57,40 @@ class OutlookProvider(BaseEmailProvider):
         method: str = "GET",
         params: dict | None = None,
         timeout: int = 30,
+        headers: dict | None = None,
     ) -> dict:
         """
         IMPORTANT:
         - When calling @odata.nextLink, params MUST be None
         - nextLink URLs are opaque and must be used as-is
         """
+        request_headers = headers if headers is not None else self.headers
+        
         try:
             if params is None:
                 response = requests.request(
                     method=method,
                     url=url,
-                    headers=self.headers,
+                    headers=request_headers,
                     timeout=timeout,
                 )
             else:
                 response = requests.request(
                     method=method,
                     url=url,
-                    headers=self.headers,
+                    headers=request_headers,
                     params=params,
                     timeout=timeout,
                 )
 
             response.raise_for_status()
-            return response.json()
+            
+            try:
+                return response.json()
+            except ValueError as exc:
+                raise OutlookAPIError(
+                    "Invalid JSON response from API"
+                ) from exc
 
         except requests.exceptions.Timeout as exc:
             raise NetworkTimeoutError("Request timed out") from exc
@@ -105,6 +117,18 @@ class OutlookProvider(BaseEmailProvider):
             and ("$" in cursor or "%24" in cursor)
         )
 
+    def _build_outlook_endpoint(self, folder: MailFolder | None) -> str:
+        """
+        Builds the correct Outlook endpoint based on folder.
+        """
+        if folder is None:
+            return "/me/messages"
+
+        if folder not in OUTLOOK_FOLDER_MAP:
+            return "/me/messages"
+
+        return f"/me/mailFolders/{OUTLOOK_FOLDER_MAP[folder]}/messages"
+
     # -------------------------
     # Token
     # -------------------------
@@ -122,34 +146,63 @@ class OutlookProvider(BaseEmailProvider):
     # Inbox
     # -------------------------
 
-    def fetch_inbox(
+    def fetch_emails(
         self,
         *,
         page_size: int = 10,
         cursor: str | None = None,
-        folder: MailFolder = MailFolder.INBOX,
+        folder: MailFolder | None = None,
+        filters: EmailSearchFilter | None = None,
     ) -> tuple[list[EmailMessage], str | None]:
 
         page_size = max(1, min(page_size, 100))
-
+        print("folder:", folder)
+        # =========================
+        # Pagination via nextLink
+        # =========================
         if cursor and self._is_valid_nextlink(cursor):
             response = self._make_request_url(cursor)
+
         else:
-            folder_name = OUTLOOK_FOLDER_MAP[folder]
-            endpoint = f"/me/mailFolders/{folder_name}/messages"
+            endpoint = self._build_outlook_endpoint(folder)
 
             params = {
                 "$top": page_size,
                 "$select": (
                     "id,subject,from,receivedDateTime,"
-                    "bodyPreview,hasAttachments"
+                    "bodyPreview,hasAttachments,"
+                    "inferenceClassification"
                 ),
                 "$expand": "attachments($select=id,name,size,contentType)",
-                "$orderby": "receivedDateTime desc",
             }
 
-            response = self._make_request("GET", endpoint, params)
+            # -------------------------
+            # Apply filters
+            # -------------------------
+            headers = None
+            if filters:
+                filter_params = OutlookQueryBuilder.build(filters)
 
+                # $search requires ConsistencyLevel header
+                if "$search" in filter_params:
+                    headers = dict(self.headers)
+                    headers["ConsistencyLevel"] = "eventual"
+
+                params.update(filter_params)
+            else:
+                params["$orderby"] = "receivedDateTime desc"
+                # Apply folder-specific filters only when no custom filters provided
+                if MailFolder.INBOX == folder:
+                    params["$orderby"] = "InferenceClassification,receivedDateTime desc"
+                    params["$filter"] = "InferenceClassification eq 'Focused'"
+                if MailFolder.STARRED == folder:
+                    params["$orderby"] = "flag/flagStatus,receivedDateTime desc"
+                    params["$filter"] = "flag/flagStatus eq 'flagged'"
+            response = self._make_request("GET", endpoint, params, headers=headers)
+
+        # =========================
+        # Normalize results
+        # =========================
         emails: list[EmailMessage] = []
 
         for msg_data in response.get("value", []):
@@ -163,7 +216,7 @@ class OutlookProvider(BaseEmailProvider):
         next_cursor = response.get("@odata.nextLink")
 
         return emails, next_cursor
-
+    
     # -------------------------
     # Email detail
     # -------------------------
@@ -172,7 +225,6 @@ class OutlookProvider(BaseEmailProvider):
         self,
         *,
         message_id: str,
-        folder: MailFolder = MailFolder.INBOX,
     ) -> EmailDetail:
 
         endpoint = f"/me/messages/{message_id}"
@@ -190,7 +242,6 @@ class OutlookProvider(BaseEmailProvider):
 
         return OutlookNormalizer.to_email_detail(
             raw,
-            folder=folder,
             attachments=attachments,
         )
 
@@ -238,13 +289,21 @@ class OutlookProvider(BaseEmailProvider):
         message_id: str,
         attachment_id: str,
     ) -> bytes:
+        """
+        Download attachment content from Outlook (Microsoft Graph).
+
+        Notes:
+        - Do NOT use $select=contentBytes (Graph limitation)
+        - contentBytes is only available on fileAttachment
+        """
 
         endpoint = f"/me/messages/{message_id}/attachments/{attachment_id}"
-        params = {
-            "$select": "contentBytes,size",
-        }
 
-        attachment_data = self._make_request("GET", endpoint, params)
+        attachment_data = self._make_request("GET", endpoint)
+
+        # Ensure this is a file attachment
+        if attachment_data.get("@odata.type") != "#microsoft.graph.fileAttachment":
+            raise OutlookAPIError("Unsupported attachment type")
 
         size = attachment_data.get("size", 0)
         if size > MAX_ATTACHMENT_SIZE_BYTES:

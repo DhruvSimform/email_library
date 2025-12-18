@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Iterable, Literal
 
 from .folders import MailFolder
 from .attachment import Attachment
 
+
+InboxClassification = Literal["primary", "focused", "other"]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class EmailMessage:
     """
     Domain model representing a read-only email summary.
@@ -15,45 +21,22 @@ class EmailMessage:
     Immutable after creation.
     """
 
-    __slots__ = (
-        "message_id",
-        "subject",
-        "sender",
-        "timestamp",
-        "preview",
-        "folder",
-        "attachments",
-    )
+    message_id: str
+    subject: str
+    sender: str
+    timestamp: datetime
+    preview: str
+    folder: MailFolder
+    attachments: Iterable[Attachment]
 
-    def __init__(
-        self,
-        *,
-        message_id: str,
-        subject: str,
-        sender: str,
-        timestamp: datetime,
-        preview: str,
-        folder: MailFolder,
-        attachments: list[Attachment],
-    ) -> None:
-        object.__setattr__(self, "message_id", message_id)
-        object.__setattr__(self, "subject", subject)
-        object.__setattr__(self, "sender", sender)
-        object.__setattr__(self, "timestamp", timestamp)
-        object.__setattr__(self, "preview", preview)
-        object.__setattr__(self, "folder", folder)
-        object.__setattr__(
-            self,
-            "attachments",
-            tuple(attachments),  # enforce immutability
-        )
+    # Inbox classification (provider-specific metadata)
+    # Gmail   → "primary"
+    # Outlook → "focused" | "other"
+    inbox_classification: InboxClassification | None = None
 
-    # -------------------------
-    # Immutability
-    # -------------------------
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        raise AttributeError("EmailMessage is immutable")
+    def __post_init__(self) -> None:
+        # Normalize to tuple to guarantee immutability
+        object.__setattr__(self, "attachments", tuple(self.attachments))
 
     # -------------------------
     # Serialization
@@ -66,7 +49,8 @@ class EmailMessage:
             "sender": self.sender,
             "timestamp": self.timestamp.isoformat(),
             "preview": self.preview,
-            "folder": self.folder.value,
+            "folder": self.folder.value if self.folder else None,
+            "inbox_classification": self.inbox_classification,
             "attachments": [
                 attachment.to_dict() for attachment in self.attachments
             ],

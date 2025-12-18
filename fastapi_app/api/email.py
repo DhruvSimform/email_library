@@ -3,10 +3,14 @@ from fastapi import APIRouter, HTTPException
 
 from email_integration.services.email_reader import EmailReader
 from email_integration.domain.models.folders import MailFolder
+from email_integration.domain.models.email_filter import EmailSearchFilter
+from google.auth.exceptions import RefreshError
+
 from email_integration.exceptions import (
     InvalidAccessTokenError,
     AttachmentTooLargeError,
     EmailIntegrationError,
+    TokenRefreshError,
 )
 
 from fastapi_app.api.schemas import (
@@ -38,7 +42,12 @@ def handle_error(exc: Exception) -> None:
         raise HTTPException(status_code=413, detail="Attachment too large")
     if isinstance(exc, EmailIntegrationError):
         raise HTTPException(status_code=500, detail=str(exc))
-    raise exc
+    if isinstance(exc, TokenRefreshError):
+        raise HTTPException(status_code=500, detail="Token refresh failed")
+    if isinstance(exc, RefreshError):
+        raise HTTPException(status_code=401, detail="Re-auth required")
+    raise 
+
 
 
 # =========================
@@ -78,10 +87,20 @@ def get_inbox(payload: InboxRequest):
     try:
         reader = get_reader(payload)
 
+        # -------------------------
+        # Convert API filters → domain filters
+        # -------------------------
+        filters = None
+        if payload.filters:
+            filters = EmailSearchFilter(
+                **payload.filters.model_dump()
+            )
+
         emails, next_cursor = reader.get_inbox(
             page_size=payload.page_size,
             cursor=payload.cursor,
-            folder=MailFolder(payload.folder),
+            folder=MailFolder(payload.folder) if payload.folder else None,
+            filters=filters,
         )
 
         return {
@@ -103,7 +122,6 @@ def get_email_detail(payload: EmailDetailRequest):
 
         detail = reader.get_email_detail(
             message_id=payload.message_id,
-            folder=MailFolder(payload.folder),
         )
 
         return detail.to_dict()

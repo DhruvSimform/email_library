@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 
 from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.email_detail import EmailDetail
@@ -25,22 +25,31 @@ class GmailNormalizer:
         folder: MailFolder,
     ) -> EmailMessage:
         headers = {
-            h["name"]: h["value"]
-            for h in raw["payload"]["headers"]
+            h["name"].lower(): h["value"]
+            for h in raw.get("payload", {}).get("headers", [])
         }
 
         attachments = GmailNormalizer.extract_attachments(raw)
 
+        # Gmail label-based inbox classification
+        label_ids = raw.get("labelIds", [])
+        if "CATEGORY_PROMOTIONS"  in label_ids or "CATEGORY_SOCIAL" in label_ids:
+            inbox_classification = "other"
+        else:
+            inbox_classification = "primary"
+
         return EmailMessage(
             message_id=raw["id"],
-            subject=headers.get("Subject", ""),
-            sender=headers.get("From", ""),
-            timestamp=datetime.fromtimestamp(
-                int(raw["internalDate"]) / 1000
+            subject=headers.get("subject", ""),
+            sender=headers.get("from", ""),
+            timestamp = datetime.fromtimestamp(
+                int(raw["internalDate"]) / 1000,
+                tz=timezone.utc,
             ),
             preview=raw.get("snippet", ""),
             folder=folder,
             attachments=attachments,
+            inbox_classification=inbox_classification,
         )
 
     # -------------------------
@@ -51,12 +60,11 @@ class GmailNormalizer:
     def to_email_detail(
         raw: dict,
         *,
-        folder: MailFolder,
         attachments: list[Attachment],
     ) -> EmailDetail:
         headers = {
-            h["name"]: h["value"]
-            for h in raw["payload"]["headers"]
+            h["name"].lower(): h["value"]
+            for h in raw.get("payload", {}).get("headers", [])
         }
 
         body_text = ""
@@ -81,19 +89,19 @@ class GmailNormalizer:
                 if "parts" in part:
                     walk(part["parts"])
 
-        walk(raw["payload"].get("parts", []))
+        walk(raw.get("payload", {}).get("parts", []))
 
         return EmailDetail(
             message_id=raw["id"],
-            subject=headers.get("Subject", ""),
-            sender=headers.get("From", ""),
-            recipients=headers.get("To", "").split(", "),
-            timestamp=datetime.fromtimestamp(
-                int(raw["internalDate"]) / 1000
+            subject=headers.get("subject", ""),
+            sender=headers.get("from", ""),
+            recipients=headers.get("to", "").split(", "),
+            timestamp = datetime.fromtimestamp(
+                int(raw["internalDate"]) / 1000,
+                tz=timezone.utc,
             ),
             body_text=body_text,
             body_html=body_html,
-            folder=folder,
             attachments=attachments,
         )
 
