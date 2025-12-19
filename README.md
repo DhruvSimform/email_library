@@ -70,7 +70,6 @@ email-library/
 - [Usage Guide](email_integration/services/readme.md) - Full API reference
 - [Adding Providers](email_integration/providers/readme.md) - Extension guide
 - [Domain Models](email_integration/domain/readme.md) - Core abstractions
-
 ## Demo Application
 
 Run the included demo to test OAuth flows and library functionality:
@@ -87,6 +86,23 @@ python -m http.server 3000
 # Complete OAuth flow to get access token
 # Use the token in FastAPI docs to test providers
 ```
+
+## Testing
+
+You can test the library functionality using the interactive test script:
+
+```bash
+# Interactive testing with the test script
+python  email_integration/tests/test_email_reader.py
+```
+
+The test script (`email_integration/tests/test_email_reader.py`) provides interactive testing for:
+- Fetching emails with filters and pagination
+- Getting detailed email content
+- Listing and downloading attachments
+- Managing email folders
+
+Configure the script by setting your provider, access token, and test parameters at the top of the file.
 
 ## Dependencies
 
