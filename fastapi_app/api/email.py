@@ -105,7 +105,7 @@ def get_inbox(payload: InboxRequest):
                 **payload.filters.model_dump()
             )
 
-        emails, next_cursor = reader.get_inbox(
+        emails, next_cursor = reader.fetch_emails(
             page_size=payload.page_size,
             cursor=payload.cursor,
             folder=MailFolder(payload.folder) if payload.folder else None,

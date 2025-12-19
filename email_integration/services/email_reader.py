@@ -42,7 +42,7 @@ class EmailReader:
     # Inbox
     # =========================
 
-    def get_inbox(
+    def fetch_emails(
         self,
         *,
         page_size: int = 10,
