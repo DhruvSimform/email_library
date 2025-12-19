@@ -25,6 +25,24 @@ The core library lives in `email_integration/` and provides a consistent, provid
 - **Rich Exceptions** - Hierarchical error handling
 - **Extensible** - Add new providers easily
 
+## Folder Handling
+
+The library automatically handles provider-specific folder structures when no specific folder is provided:
+
+**Gmail (default folders when none specified):**
+- Primary inbox, Social, and Promotions categories
+
+**Outlook (default folders when none specified):**
+- Inbox (Focused and Other), Sent Items, and Junk Email
+
+**Standardized folder mappings:**
+- `INBOX` → Gmail: Primary Inbox | Outlook: Focused Inbox
+- `SENT` → Gmail: Sent Items | Outlook: Sent Items
+- `SPAM` → Gmail: Spam Email | Outlook: Junk Email
+- `DELETED` → Gmail: Trash Items | Outlook: Deleted Items
+- `DRAFTS` → Gmail: Drafts | Outlook: Drafts
+- `STARRED` → Gmail: Starred | Outlook: Flagged
+
 ## Project Structure
 
 ```
