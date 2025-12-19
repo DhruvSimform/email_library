@@ -254,5 +254,8 @@ class GmailProvider(BaseEmailProvider):
             raise AttachmentTooLargeError("Attachment too large")
 
         return content
+    
+    def __repr__(self):
+        return "GmailProvider()"
 
 ProviderRegistry.register("gmail", GmailProvider)
