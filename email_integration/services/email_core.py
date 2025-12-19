@@ -6,7 +6,7 @@ from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_filter import EmailSearchFilter
 from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.folders import MailFolder
-
+from email_integration.core.logging import logger
 
 class EmailCore:
     """
@@ -40,7 +40,7 @@ class EmailCore:
         """
         Fetch a page of emails from a folder with optional filters.
         """
-
+        logger.debug(f"{self._provider} => Fetching emails : page_size={page_size}, cursor={cursor}, folder={folder}, filters={filters}")
         return self._provider.fetch_emails(
             page_size=page_size,
             cursor=cursor,
@@ -60,6 +60,7 @@ class EmailCore:
         """
         Fetch full details of a single email.
         """
+        logger.debug(f"{self._provider} => Fetching email detail for message_id={message_id}")
         return self._provider.fetch_email_detail(
             message_id=message_id,
         )
@@ -72,6 +73,7 @@ class EmailCore:
         """
         List supported default folders.
         """
+        logger.debug(f"{self._provider} => Listing folders")
         return self._provider.list_folders()
 
     # =========================
@@ -86,6 +88,7 @@ class EmailCore:
         """
         List attachments for an email.
         """
+        logger.debug(f"{self._provider} => Listing attachments for message_id={message_id}")
         return self._provider.list_attachments(
             message_id=message_id,
         )
@@ -99,6 +102,7 @@ class EmailCore:
         """
         Download an attachment.
         """
+        logger.debug(f"{self._provider} => Downloading attachment for message_id={message_id}, attachment_id={attachment_id}")
         return self._provider.download_attachment(
             message_id=message_id,
             attachment_id=attachment_id,
@@ -112,4 +116,5 @@ class EmailCore:
         """
         Check whether the provider token is still valid.
         """
+        logger.debug(f"{self._provider} => Checking token validity")
         return self._provider.is_token_valid()

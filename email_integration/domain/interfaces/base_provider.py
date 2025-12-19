@@ -153,3 +153,10 @@ class BaseEmailProvider(ABC):
             OAuth token expired → Prompt re-auth
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def __repr__(self) -> str:
+        """
+        String representation of the provider instance.
+        """
+        raise NotImplementedError

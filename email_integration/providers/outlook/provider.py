@@ -347,5 +347,8 @@ class OutlookProvider(BaseEmailProvider):
             raise
         except Exception as exc:
             raise OutlookAPIError("Failed to download attachment") from exc
+        
+    def __repr__(self) -> str:
+        return "OutlookProvider()"
 
 ProviderRegistry.register("outlook", OutlookProvider)

@@ -19,4 +19,11 @@ class ProviderRegistry:
         if not provider_cls:
             raise UnsupportedProviderError(f"Provider '{name}' not registered")
         return provider_cls()
+    
+    @classmethod
+    def list_providers(cls) -> list[str]:
+        return list(cls._providers.keys())
+    
+    def __repr__(self):
+        return f"ProviderRegistry(providers={list(self._providers.keys())})"
 # Providers are registered in their respective modules

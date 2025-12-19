@@ -8,6 +8,7 @@ from email_integration.domain.models.folders import MailFolder
 from email_integration.exceptions.provider import UnsupportedProviderError
 from email_integration.providers.registry import ProviderRegistry
 from email_integration.services.email_core import EmailCore
+from email_integration.core.logging import logger
 
 
 class EmailReader:
@@ -29,8 +30,10 @@ class EmailReader:
     ) -> None:
         provider_name = provider.lower()
         try:
+            logger.debug(f"Initializing EmailReader with provider: {provider_name}")
             provider_instance = ProviderRegistry.get(provider_name)
         except UnsupportedProviderError as e:
+            logger.error(f"Unsupported email provider: {provider_name}")
             raise UnsupportedProviderError(f"Email provider '{provider}' is not supported. Please check the spelling and try again.") from e
         provider_instance.set_credentials(access_token)
         self._core = EmailCore(provider_instance)
