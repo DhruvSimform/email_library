@@ -17,15 +17,19 @@ class EmailDetail:
     message_id: str
     subject: str
     sender: str
-    recipients: Iterable[str]
+    recipients: Iterable[str] | None
+    cc: Iterable[str] | None
+    bcc: Iterable[str] | None
     timestamp: datetime
     body_text: str
     body_html: str | None
     attachments: Iterable[Attachment]
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "recipients", tuple(self.recipients))
+        object.__setattr__(self, "recipients", tuple(self.recipients) or ())
         object.__setattr__(self, "attachments", tuple(self.attachments))
+        object.__setattr__(self, "cc", tuple(self.cc or ()))
+        object.__setattr__(self, "bcc", tuple(self.bcc or ()))
 
     # -------------------------
     # Serialization
@@ -37,6 +41,8 @@ class EmailDetail:
             "subject": self.subject,
             "sender": self.sender,
             "recipients": list(self.recipients),
+            "cc": list(self.cc),
+            "bcc": list(self.bcc),
             "timestamp": self.timestamp.isoformat(),
             "body_text": self.body_text,
             "body_html": self.body_html,

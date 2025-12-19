@@ -7,6 +7,7 @@ from email_integration.domain.models.attachment import Attachment
 from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.folders import MailFolder
+from email_integration.core.constant import GMAIL_UNDISCLOSED_RECIPIENT
 
 
 class GmailNormalizer:
@@ -91,14 +92,21 @@ class GmailNormalizer:
 
         walk(raw.get("payload", {}).get("parts", []))
 
+        # Filter out undisclosed recipients
+        recipients = set(headers.get("to", "").split(", ")) - {GMAIL_UNDISCLOSED_RECIPIENT}
+        cc = set(headers.get("cc", "").split(", ")) - {GMAIL_UNDISCLOSED_RECIPIENT}
+        bcc = set(headers.get("bcc", "").split(", ")) - {GMAIL_UNDISCLOSED_RECIPIENT}
+
         return EmailDetail(
             message_id=raw["id"],
             subject=headers.get("subject", ""),
             sender=headers.get("from", ""),
-            recipients=headers.get("to", "").split(", "),
+            recipients=list(recipients),
+            cc=list(cc),
+            bcc=list(bcc),
             timestamp = datetime.fromtimestamp(
-                int(raw["internalDate"]) / 1000,
-                tz=timezone.utc,
+            int(raw["internalDate"]) / 1000,
+            tz=timezone.utc,
             ),
             body_text=body_text,
             body_html=body_html,

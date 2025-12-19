@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Client - Gmail & Outlook Integration</title>
+
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ================= HEADER ================= */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .header-logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .header-search {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 70px 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 14px;
+      background: #f8f9fa;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      background: #fff;
+      border-color: #4285F4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    .filter-toggle-btn {
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      transition: all 0.2s;
+    }
+
+    .filter-toggle-btn:hover {
+      color: #4285F4;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .provider-selector {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .provider-selector:hover {
+      border-color: #4285F4;
+      background: #fff;
+    }
+
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+    }
+
+    /* ================= MAIN CONTAINER ================= */
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+      gap: 0;
+    }
+
+    /* ================= SIDEBAR ================= */
+    .sidebar {
+      width: 280px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .sidebar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      padding: 0 8px;
+    }
+
+    .folder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .folder-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .folder-item:hover {
+      background: #f5f5f5;
+    }
+
+    .folder-item.active {
+      background: #e8f0fe;
+      color: #1f2937;
+      font-weight: 600;
+    }
+
+    .folder-icon {
+      font-size: 14px;
+      width: 20px;
+      color: #666;
+    }
+
+    .folder-item.active .folder-icon {
+      color: #4285F4;
+    }
+
+    .folder-unread {
+      margin-left: auto;
+      background: #4285F4;
+      color: white;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 24px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* ================= MAIN CONTENT ================= */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .email-list-container {
+      flex: 0 0 400px;
+      min-width: 320px;
+      overflow-y: auto;
+      border-right: 1px solid #e0e0e0;
+      background: #fff;
+    }
+
+    .email-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .email-item:hover {
+      background: #f8f9fa;
+    }
+
+    .email-item.active {
+      background: #e8f0fe;
+      border-left: 4px solid #4285F4;
+    }
+
+    .email-avatar {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .email-avatar:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transform: scale(1.05);
+    }
+
+    .email-item:hover .email-avatar {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .email-preview {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .email-from {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .email-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .email-subject {
+      font-size: 13px;
+      color: #374151;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      word-break: break-word;
+    }
+    
+    .email-subject-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .attachment-badge-inline {
+      color: #4285F4;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .email-snippet {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 6px;
+    }
+
+    .email-attachments-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .list-attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #f0f4ff;
+      border: 1px solid #e0e6ff;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    
+    .list-attachment-item.attachment-more {
+      background: #e8eef7;
+      color: #4285F4;
+      font-weight: 600;
+      border-color: #d0dff7;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .list-attachment-item.attachment-more:hover {
+      background: #dae4f0;
+      border-color: #afc8f0;
+    }
+
+    .attachment-type-icon {
+      font-size: 11px;
+      color: #4285F4;
+      min-width: 10px;
+    }
+
+    .list-attachment-name {
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #202124;
+      font-weight: 500;
+    }
+
+    .list-attachment-size {
+      color: #80868b;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .email-date {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .email-unread {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .email-has-attachment {
+      color: #4285F4;
+      margin-left: 4px;
+    }
+
+    .inbox-classification-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    .inbox-classification-primary {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .inbox-classification-focused {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .inbox-classification-other {
+      background: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d6d8db;
+    }
+
+    .attachment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background-color: #E3F2FD;
+      color: #1976D2;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    .attachment-badge i {
+      font-size: 11px;
+    }
+
+    /* ================= EMAIL DETAIL ================= */
+    .email-detail-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      border-left: 1px solid #e0e0e0;
+    }
+
+    .email-detail-header {
+      padding: 24px 24px 16px 24px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .email-detail-title {
+      flex: 1;
+    }
+
+    .email-subject-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 16px;
+      line-height: 1.3;
+      word-wrap: break-word;
+    }
+
+    .email-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: #5f6368;
+    }
+
+    .email-from-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .email-from-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .email-from-name {
+      font-weight: 600;
+      color: #202124;
+      font-size: 14px;
+    }
+
+    .email-from-email {
+      color: #80868b;
+      font-size: 12px;
+    }
+
+    .email-timestamp {
+      color: #80868b;
+      font-size: 12px;
+    }
+
+    .recipient-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e8f0fe;
+      border: 1px solid #c6d9f7;
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #1f2937;
+    }
+
+    .recipient-badge:hover {
+      background: #d2e3fc;
+      border-color: #9cc0f7;
+    }
+
+    .email-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 1px solid #dadce0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #5f6368;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 32px;
+      height: 32px;
+      justify-content: center;
+    }
+
+    .action-btn:hover {
+      background: #f8f9fa;
+      border-color: #d2d3d4;
+      color: #202124;
+    }
+
+    .action-btn i {
+      font-size: 14px;
+    }
+
+    .email-detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: #fff;
+    }
+
+    .email-body {
+      color: #202124;
+      line-height: 1.6;
+      font-size: 14px;
+      word-wrap: break-word;
+      overflow-x: auto;
+    }
+
+    .email-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .email-body table {
+      max-width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+
+    .email-body td, .email-body th {
+      padding: 8px;
+      border: 1px solid #dadce0;
+    }
+
+    .email-body a {
+      color: #1976D2;
+      text-decoration: none;
+    }
+
+    .email-body a:hover {
+      text-decoration: underline;
+    }
+
+    /* ================= ATTACHMENTS ================= */
+    .attachments-section {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e0e0;
+      background: #fafafa;
+    }
+
+    .attachments-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #5f6368;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .attachments-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .attachment-item-gmail {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #dadce0;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      flex: 0 1 auto;
+      min-width: 200px;
+      max-width: 280px;
+    }
+
+    .attachment-item-gmail:hover {
+      border-color: #4285F4;
+      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.3);
+      background: #f8f9fa;
+    }
+
+    .attachment-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .attachment-file-icon {
+      color: #5f6368;
+      font-size: 20px;
+    }
+
+    .attachment-ext {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      font-size: 9px;
+      font-weight: 700;
+      background: #ea4335;
+      color: white;
+      padding: 2px 3px;
+      border-radius: 2px;
+      min-width: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    .attachment-item-gmail:hover .attachment-ext {
+      display: block;
+    }
+
+    .attachment-info {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .attachment-filename {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #202124;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .attachment-size {
+      color: #80868b;
+      font-size: 12px;
+    }
+
+    .attachment-btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      color: #5f6368;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .attachment-btn-download:hover {
+      background: #f0f0f0;
+      color: #202124;
+    }
+
+    .attachment-btn-download:active {
+      background: #e8e8e8;
+    }
+
+    .attachment-btn-download:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .attachment-item:hover {
+      border-color: #4285F4;
+      background: #e8f0fe;
+    }
+
+    .attachment-icon {
+      color: #4285F4;
+      font-size: 16px;
+    }
+
+    .attachment-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attachment-download {
+      cursor: pointer;
+      color: #4285F4;
+      transition: all 0.2s;
+    }
+
+    .attachment-download:hover {
+      opacity: 0.7;
+    }    .attachment-download {
+      color: #4285F4;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .attachment-download:hover {
+      background: rgba(66, 133, 244, 0.1);
+    }
+
+    /* ================= LOADING & EMPTY ================= */
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #4285F4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      flex-direction: column;
+      gap: 16px;
+      color: #999;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    /* ================= FILTER PANEL ================= */
+    .filter-panel-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 999;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .filter-panel-overlay.active {
+      display: block;
+    }
+
+    .filter-panel {
+      position: fixed;
+      right: -380px;
+      top: 0;
+      width: 380px;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      transition: right 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .filter-panel.active {
+      right: 0;
+    }
+
+    .filter-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #e8e8e8;
+      position: sticky;
+      top: 0;
+      background: #fff;
+    }
+
+    .filter-panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #202124;
+    }
+
+    .filter-close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .filter-close-btn:hover {
+      background: #f5f5f5;
+      color: #202124;
+    }
+
+    .filter-panel-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .filter-group {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-input {
+      padding: 10px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #202124;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: #4285F4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+      background: #fff;
+    }
+
+    .filter-input::placeholder {
+      color: #9aa0a6;
+    }
+
+    .filter-date {
+      padding: 10px 12px;
+    }
+
+    .date-range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filter-date {
+      flex: 1;
+    }
+
+    .date-separator {
+      color: #9aa0a6;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .filter-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #202124;
+      user-select: none;
+    }
+
+    .filter-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #4285F4;
+    }
+
+    .filter-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .filter-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #202124;
+      user-select: none;
+    }
+
+    .filter-radio {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #4285F4;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+      border-top: 1px solid #e8e8e8;
+      background: #f8f9fa;
+      position: sticky;
+      bottom: 0;
+    }
+
+    .filter-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-btn-apply {
+      background: #4285F4;
+      color: white;
+    }
+
+    .filter-btn-apply:hover {
+      background: #357ae8;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-btn-apply:active {
+      background: #2d5aa8;
+    }
+
+    .filter-btn-clear {
+      background: #f5f5f5;
+      color: #4285F4;
+      border: 1px solid #dadce0;
+    }
+
+    .filter-btn-clear:hover {
+      background: #f0f0f0;
+    }
+
+    .filter-btn-clear:active {
+      background: #e8e8e8;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* ================= RESPONSIVE ================= */
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 220px;
+      }
+
+      .email-list-container {
+        max-width: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .sidebar-section {
+        padding: 12px;
+        border-bottom: none;
+        border-right: 1px solid #f0f0f0;
+        flex-shrink: 0;
+      }
+
+      .email-list-container,
+      .email-detail-container {
+        max-width: none;
+        min-width: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <i class="fas fa-envelope"></i> Mail
+      </div>
+      <div class="header-search">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search emails... (e.g., 'invoice', 'from:john@example.com')"
+        />
+        <i class="fas fa-search search-icon"></i>
+        <button class="filter-toggle-btn" id="filterToggleBtn" title="Advanced filters">
+          <i class="fas fa-filter"></i>
+        </button>
+      </div>
+    </div>
+    <div class="header-right">
+      <select class="provider-selector" id="providerSelector">
+        <option value="">Select Provider</option>
+        <option value="gmail">Gmail</option>
+        <option value="outlook">Outlook</option>
+      </select>
+      <button class="logout-btn" id="logoutBtn" style="display:none;">Logout</button>
+    </div>
+  </div>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <div class="container">
+    <!-- ================= SIDEBAR ================= -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Folders</div>
+        <div class="folder-list" id="folderList">
+          <div class="folder-item loading">
+            <div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <div class="main-content">
+      <!-- ================= EMAIL LIST ================= -->
+      <div class="email-list-container" id="emailListContainer">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+          <div>Select a provider and folder to view emails</div>
+        </div>
+      </div>
+
+      <!-- ================= EMAIL DETAIL ================= -->
+      <div class="email-detail-container" id="emailDetailContainer" style="display:none;">
+        <div class="email-detail-header">
+          <div class="email-detail-title">
+            <div class="email-subject-title" id="detailSubject">Select an email</div>
+            <div class="email-meta">
+              <div class="email-from-avatar" id="detailFromAvatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+              <div class="email-from-info">
+                <div class="email-from-name" id="detailFrom">-</div>
+                <div class="email-from-email" id="detailFromEmail">-</div>
+              </div>
+              <span class="email-timestamp" id="detailDate">-</span>
+            </div>
+            <div id="detailRecipients" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+              <div style="font-size: 12px; font-weight: 600; color: #5f6368; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">To</div>
+              <div id="recipientsList" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #202124;"></div>
+            </div>
+            <div id="detailCc" style="margin-top: 12px; display: none;">
+              <div style="font-size: 12px; font-weight: 600; color: #5f6368; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Cc</div>
+              <div id="ccList" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #202124;"></div>
+            </div>
+            <div id="detailBcc" style="margin-top: 12px; display: none;">
+              <div style="font-size: 12px; font-weight: 600; color: #5f6368; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Bcc</div>
+              <div id="bccList" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #202124;"></div>
+            </div>
+          </div>
+          <div class="email-actions">
+            <button class="action-btn" id="backBtn" title="Back"><i class="fas fa-arrow-left"></i></button>
+            <button class="action-btn" id="replyBtn" title="Reply"><i class="fas fa-reply"></i></button>
+            <button class="action-btn" id="deleteBtn" title="Delete"><i class="fas fa-trash"></i></button>
+            <button class="action-btn" id="moreBtn" title="More"><i class="fas fa-ellipsis-v"></i></button>
+          </div>
+        </div>
+
+        <div class="email-detail-body">
+          <div class="email-body" id="detailBody">
+            <div class="loading">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="attachmentsSection" style="display:none;">
+          <div class="attachments-section">
+            <div class="attachments-title"><i class="fas fa-paperclip"></i> Attachments</div>
+            <div class="attachments-list" id="attachmentsList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FILTER PANEL ================= -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-header">
+      <div class="filter-panel-title">Advanced Filters</div>
+      <button class="filter-close-btn" id="filterCloseBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="filter-panel-content">
+      <!-- From Address -->
+      <div class="filter-group">
+        <label class="filter-label">From</label>
+        <input type="email" class="filter-input" id="filterFrom" placeholder="sender@example.com" />
+      </div>
+
+      <!-- To Addresses -->
+      <div class="filter-group">
+        <label class="filter-label">To</label>
+        <input type="text" class="filter-input" id="filterTo" placeholder="recipient@example.com (comma-separated)" />
+      </div>
+
+      <!-- Subject Contains -->
+      <div class="filter-group">
+        <label class="filter-label">Subject Contains</label>
+        <input type="text" class="filter-input" id="filterSubject" placeholder="e.g., 'invoice', 'proposal'" />
+      </div>
+
+      <!-- Body Contains -->
+      <div class="filter-group">
+        <label class="filter-label">Body Contains</label>
+        <input type="text" class="filter-input" id="filterBody" placeholder="search in email body" />
+      </div>
+
+      <!-- Has Words -->
+      <div class="filter-group">
+        <label class="filter-label">Has Words</label>
+        <input type="text" class="filter-input" id="filterWords" placeholder="word1, word2, word3 (comma-separated)" />
+      </div>
+
+      <!-- Date Range -->
+      <div class="filter-group">
+        <label class="filter-label">Date Range</label>
+        <div class="date-range-inputs">
+          <input type="date" class="filter-input filter-date" id="filterStartDate" />
+          <span class="date-separator">to</span>
+          <input type="date" class="filter-input filter-date" id="filterEndDate" />
+        </div>
+      </div>
+
+      <!-- Attachment Filter -->
+      <div class="filter-group">
+        <label class="filter-checkbox-label">
+          <input type="checkbox" class="filter-checkbox" id="filterHasAttachments" />
+          <span>Has Attachments</span>
+        </label>
+      </div>
+
+      <!-- Read Status -->
+      <div class="filter-group">
+        <label class="filter-label">Read Status</label>
+        <div class="filter-radio-group">
+          <label class="filter-radio-label">
+            <input type="radio" name="readStatus" class="filter-radio" value="all" checked />
+            <span>All</span>
+          </label>
+          <label class="filter-radio-label">
+            <input type="radio" name="readStatus" class="filter-radio" value="read" />
+            <span>Read</span>
+          </label>
+          <label class="filter-radio-label">
+            <input type="radio" name="readStatus" class="filter-radio" value="unread" />
+            <span>Unread</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="filter-actions">
+        <button class="filter-btn filter-btn-apply" id="filterApplyBtn">Apply Filters</button>
+        <button class="filter-btn filter-btn-clear" id="filterClearBtn">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-panel-overlay" id="filterPanelOverlay"></div>
+
+  <script src="js/api-client.js"></script>
+  <script src="js/email-client.js"></script>
+
+</body>
+</html>

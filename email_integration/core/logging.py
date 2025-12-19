@@ -6,3 +6,4 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("email_integration")
+logger.setLevel(logging.DEBUG)

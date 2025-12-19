@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Client - Getting Started</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 50px;
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header p {
+      font-size: 1.3rem;
+      opacity: 0.95;
+      margin-bottom: 5px;
+    }
+
+    .header .version {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .card h2 {
+      font-size: 1.5rem;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    .card-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.2s;
+      text-align: center;
+      font-size: 0.9rem;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+      border-color: #5568d3;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: #f5f5f5;
+      border-color: #667eea;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .action-card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .action-card h3 {
+      color: #1f2937;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .action-card p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .action-card .btn {
+      width: 100%;
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 2px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .info-box h3 {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .info-box ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .info-box li {
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .info-box li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .feature-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .feature-badge i {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      text-align: center;
+      color: rgba(255,255,255,0.8);
+      padding-top: 30px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      margin-top: 40px;
+    }
+
+    .footer p {
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .social-links a {
+      color: white;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .social-links a:hover {
+      opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><i class="fas fa-envelope"></i> Email Client</h1>
+      <p>Modern multi-provider email management platform</p>
+      <div class="version">✓ v1.0 - Gmail & Outlook Support</div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <h3>📋 Quick Overview</h3>
+      <ul>
+        <li>Unified inbox for Gmail & Outlook</li>
+        <li>Advanced search with filters</li>
+        <li>HTML email rendering</li>
+        <li>Attachment management</li>
+        <li>Responsive design</li>
+        <li>OAuth 2.0 security</li>
+      </ul>
+    </div>
+
+    <!-- Main Action Cards -->
+    <div class="action-buttons">
+      <div class="action-card">
+        <div class="action-card-icon">🔐</div>
+        <h3>Get Started</h3>
+        <p>Setup OAuth and login</p>
+        <a href="index.html" class="btn">Open Login Page</a>
+      </div>
+
+      <div class="action-card">
+        <div class="action-card-icon">📧</div>
+        <h3>Browse Emails</h3>
+        <p>View and manage your emails</p>
+        <a href="email-client.html" class="btn">Open Email Client</a>
+      </div>
+
+      <div class="action-card">
+        <div class="action-card-icon">⚡</div>
+        <h3>Quick Start</h3>
+        <p>Get up and running in 5 minutes</p>
+        <a href="QUICKSTART.md" class="btn btn-secondary">View Guide</a>
+      </div>
+    </div>
+
+    <!-- Documentation Cards -->
+    <div style="margin-top: 50px; text-align: center; color: white; margin-bottom: 30px;">
+      <h2 style="font-size: 2rem; margin-bottom: 10px;">📚 Documentation</h2>
+      <p style="font-size: 1.1rem; opacity: 0.95;">Complete guides and references for all aspects of the Email Client</p>
+    </div>
+
+    <div class="grid">
+      <!-- Quick Start Card -->
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h2>Quick Start</h2>
+        <p>Get your email client up and running in just 5 minutes with this quick setup guide.</p>
+        <div class="card-links">
+          <a href="QUICKSTART.md" class="btn">View Quick Start</a>
+        </div>
+      </div>
+
+      <!-- Setup Guide Card -->
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h2>Setup Guide</h2>
+        <p>Detailed step-by-step instructions for OAuth setup, configuration, and deployment.</p>
+        <div class="card-links">
+          <a href="SETUP.md" class="btn">View Setup Guide</a>
+          <small style="color: #999; margin-top: 5px;">Covers Google & Microsoft OAuth, CORS, deployment</small>
+        </div>
+      </div>
+
+      <!-- API Reference Card -->
+      <div class="card">
+        <div class="card-icon">🔌</div>
+        <h2>API Reference</h2>
+        <p>Complete API documentation with examples, request/response formats, and integration tips.</p>
+        <div class="card-links">
+          <a href="API.md" class="btn">View API Docs</a>
+          <small style="color: #999; margin-top: 5px;">All endpoints, filters, error handling, cURL examples</small>
+        </div>
+      </div>
+
+      <!-- UI/UX Guide Card -->
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h2>UI/UX Guide</h2>
+        <p>Visual guide with component descriptions, layouts, color schemes, and interaction patterns.</p>
+        <div class="card-links">
+          <a href="UI-GUIDE.md" class="btn">View UI Guide</a>
+          <small style="color: #999; margin-top: 5px;">Layouts, components, colors, accessibility, mobile</small>
+        </div>
+      </div>
+
+      <!-- README Card -->
+      <div class="card">
+        <div class="card-icon">📖</div>
+        <h2>Full Documentation</h2>
+        <p>Comprehensive documentation covering all features, browser support, and troubleshooting.</p>
+        <div class="card-links">
+          <a href="README.md" class="btn">View Full Docs</a>
+          <small style="color: #999; margin-top: 5px;">Features, project structure, troubleshooting, roadmap</small>
+        </div>
+      </div>
+
+      <!-- File Reference Card -->
+      <div class="card">
+        <div class="card-icon">📁</div>
+        <h2>File Reference</h2>
+        <p>Complete inventory of all project files with descriptions, usage examples, and statistics.</p>
+        <div class="card-links">
+          <a href="FILES.md" class="btn">View File Reference</a>
+          <small style="color: #999; margin-top: 5px;">Structure, file descriptions, dependencies, testing</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div style="margin-top: 50px; text-align: center; color: white; margin-bottom: 30px;">
+      <h2 style="font-size: 2rem; margin-bottom: 20px;">✨ Key Features</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-badge">
+        <i class="fas fa-lock"></i>
+        OAuth 2.0 Security
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-folders"></i>
+        Multi-Folder Navigation
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-search"></i>
+        Advanced Search
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-envelope"></i>
+        Gmail Integration
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-envelope-open"></i>
+        Outlook Integration
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-paperclip"></i>
+        Attachment Support
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-mobile-alt"></i>
+        Responsive Design
+      </div>
+      <div class="feature-badge">
+        <i class="fas fa-code"></i>
+        REST API
+      </div>
+    </div>
+
+    <!-- Quick Links Section -->
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; margin-top: 40px; color: white; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2);">
+      <h3 style="font-size: 1.3rem; margin-bottom: 20px;">🚀 Next Steps</h3>
+      <ol style="list-style-position: inside; line-height: 2; font-size: 1.05rem;">
+        <li>Read the <strong><a href="QUICKSTART.md" style="color: #4ade80;">Quick Start Guide</a></strong> (5 minutes)</li>
+        <li>Follow the <strong><a href="SETUP.md" style="color: #4ade80;">Setup Instructions</a></strong> for OAuth configuration</li>
+        <li>Open the <strong><a href="index.html" style="color: #4ade80;">Login Page</a></strong> to authenticate</li>
+        <li>Use the <strong><a href="email-client.html" style="color: #4ade80;">Email Client</a></strong> to browse emails</li>
+        <li>Reference the <strong><a href="API.md" style="color: #4ade80;">API Documentation</a></strong> for integration</li>
+      </ol>
+    </div>
+
+    <!-- Tech Stack -->
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; margin-top: 20px; color: white; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2);">
+      <h3 style="font-size: 1.3rem; margin-bottom: 15px;">🛠 Tech Stack</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; font-size: 0.95rem; line-height: 2;">
+        <div>
+          <strong>Frontend:</strong><br>
+          HTML5, CSS3, JavaScript ES6+
+        </div>
+        <div>
+          <strong>OAuth:</strong><br>
+          Google OAuth 2.0, Microsoft MSAL
+        </div>
+        <div>
+          <strong>Icons:</strong><br>
+          Font Awesome 6.4.0
+        </div>
+        <div>
+          <strong>API:</strong><br>
+          REST, JSON, CORS
+        </div>
+        <div>
+          <strong>Security:</strong><br>
+          HTTPS, Token-based Auth, HTML Sanitization
+        </div>
+        <div>
+          <strong>Browsers:</strong><br>
+          Chrome 90+, Firefox, Safari, Edge
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2024 Email Client - Multi-Provider Email Management</p>
+      <p>Supports Gmail and Outlook with advanced search and attachment management</p>
+      <p style="font-size: 0.85rem; margin-top: 15px; opacity: 0.7;">
+        Need help? Check the documentation files above or review the troubleshooting sections in SETUP.md
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>

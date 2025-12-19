@@ -9,6 +9,21 @@ from email_integration.domain.models.email_detail import EmailDetail
 from email_integration.domain.models.email_message import EmailMessage
 from email_integration.domain.models.folders import MailFolder
 
+def _parse_recipients(items: list[dict] | None) -> list[str]:
+    if not items:
+        return []
+
+    result: list[str] = []
+    for item in items:
+        email_data = item.get("emailAddress")
+        if not email_data:
+            continue
+
+        name = email_data.get("name", "")
+        email = email_data.get("address", "")
+        result.append(f"{name} <{email}>" if name else email)
+
+    return result
 
 class OutlookNormalizer:
     """
@@ -63,11 +78,8 @@ class OutlookNormalizer:
 
         # Outlook gives: "focused" | "other"
         raw_classification = raw.get("inferenceClassification")
-
         # Map to domain-level inbox classification
-        inbox_classification: str | None = None
-        if raw_classification in ("focused", "other"):
-            inbox_classification = raw_classification
+        inbox_classification = {"focused": "primary", "other": "other"}.get(raw_classification, "other")
 
         return EmailMessage(
             message_id=raw["id"],
@@ -101,19 +113,14 @@ class OutlookNormalizer:
             sender = f"{sender_name} <{sender_email}>" if sender_name else sender_email
 
         # Extract recipients
-        recipients: list[str] = []
-        if raw.get("toRecipients"):
-            for recipient in raw["toRecipients"]:
-                if recipient.get("emailAddress"):
-                    name = recipient["emailAddress"].get("name", "")
-                    email = recipient["emailAddress"].get("address", "")
-                    recipients.append(f"{name} <{email}>" if name else email)
-
+        recipients: list[str] = _parse_recipients(raw.get("toRecipients"))
+        cc: list[str] = _parse_recipients(raw.get("ccRecipients"))
+        bcc: list[str] = _parse_recipients(raw.get("bccRecipients"))
+       
         # Parse timestamp
         timestamp = datetime.fromisoformat(
                 raw["receivedDateTime"].replace("Z", "+00:00")
         ).astimezone(timezone.utc)
-
         # Extract body content
         body_content = raw.get("body", {})
         body_text = ""
@@ -132,6 +139,8 @@ class OutlookNormalizer:
             subject=raw.get("subject", ""),
             sender=sender,
             recipients=recipients,
+            cc=cc,
+            bcc=bcc,
             timestamp=timestamp,
             body_text=body_text,
             body_html=body_html,

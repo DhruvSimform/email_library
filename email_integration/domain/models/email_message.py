@@ -7,7 +7,7 @@ from typing import Any, Iterable, Literal
 from .attachment import Attachment
 from .folders import MailFolder
 
-InboxClassification = Literal["primary", "focused", "other"]
+InboxClassification = Literal["primary", "other"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

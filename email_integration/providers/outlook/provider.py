@@ -253,7 +253,7 @@ class OutlookProvider(BaseEmailProvider):
         params = {
             "$expand": "attachments",
             "$select": (
-                "id,subject,from,toRecipients,"
+                "id,subject,from,toRecipients,ccRecipients,bccRecipients,"
                 "receivedDateTime,body,bodyPreview,attachments"
             ),
         }
