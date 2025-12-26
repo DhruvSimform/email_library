@@ -53,9 +53,9 @@ email-library/
 │   ├── exceptions/                 # Custom exceptions
 │   ├── providers/                  # Gmail & Outlook implementations
 │   ├── services/                   # Public API (EmailReader)
-│   └── tests/
+│   └── tests/                      # Test script to validate functionality 
 ├── fastapi_app/                    # Demo: FastAPI backend
-├── frontend/                       # Demo: HTML OAuth frontend
+├── frontend/                       # Demo: HTML OAuth frontend and email client test UI
 ├── pyproject.toml
 └── README.md
 ```
